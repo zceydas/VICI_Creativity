@@ -1,0 +1,965 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+
+
+```{r}
+rm(list=ls()) # removes all variables from the workspace :)
+
+# data scaled using only session 1 data below
+data1 <- read.csv('~/Dropbox/DCCN/Creativity/CreativitySession1_Updated.csv')
+data1$Putamen_ki.c <- scale(data1$Putamen_ki) #dataAll$Putamen_ki - mean(dataAll$Putamen_ki)
+data1$Caudate_ki.c <- scale(data1$Caudate_ki) #dataAll$Caudate_ki - mean(dataAll$Caudate_ki)
+data1$VS_ki.c <- scale(data1$VS_ki) #dataAll$VS_ki - mean(dataAll$VS_ki)
+write.csv(data1,"~/Dropbox/DCCN/Creativity/CreativitySession1_2.csv", row.names = FALSE)
+QInfo <- quantile(data1$Putamen_ki.c, prob=c(.20,.5,.80))
+
+dataNew <- data1 %>% mutate(PutamenQuartile =
+                     case_when(Putamen_ki.c <= QInfo[1] ~ "1", 
+                               Putamen_ki.c >= QInfo[3] ~ "2")
+)
+
+write.csv(dataNew,"~/Dropbox/DCCN/Creativity/Creativity_session1_Quartiled.csv", row.names = FALSE)
+
+
+```
+
+
+```{r}
+# and then added to the following workbook
+dataAll <- read.csv('~/Dropbox/DCCN/Creativity/CreativityIDsheet_MissingDataRemoved_Updated.csv')
+table(dataAll$Session, dataAll$Drug)
+# turn drug conditions into factor levels
+dataAll$Drug <- factor(dataAll$Drug, levels = c("MPH","SUL","PBO"));
+dataAll$PutamenSplit <- factor(dataAll$PutamenSplit, levels = c("0","1"));
+dataAll$CaudateSplit <- factor(dataAll$CaudateSplit, levels = c("0","1"));
+dataAll$VSSplit <- factor(dataAll$VSSplit, levels = c("0","1"));
+
+
+dataAll$DifEnd_Total <- dataAll$DifferentEnd/dataAll$Total # divide different end scores by total number of ideas
+dataAll$DifEnd_Con <- dataAll$DifferentEnd/dataAll$Convergent_Pasta # divide different end scores by total number of ideas
+
+
+# set contrasts to sum-to-zero
+options(contrasts=c("contr.sum", "contr.poly"))
+
+# set two dataframes for the contrast between MPH and PBO - between SUL and PBO
+df_MPH <- dplyr::filter(dataAll, Drug %in% c("MPH","PBO"))  
+df_SUL <- dplyr::filter(dataAll, Drug %in% c("SUL","PBO"))
+data_PBO <- dplyr::filter(dataAll, Drug %in% c("PBO"))
+
+
+```
+```{r}
+
+## PLACEBO
+# does creativity vary also as a function of individual differences in dopamine synthesis capacity under baseline (under placebo)?
+
+Placebo_RAT_Caudate <- lm(Convergent_RAT ~ 1 + Caudate_ki.c , data = data_PBO, REML=F)
+Placebo_RAT_VS <- lm(Convergent_RAT ~ 1 + VS_ki.c , data = data_PBO, REML=F)
+Placebo_RAT_Putamen <- lm(Convergent_RAT ~ 1 + Putamen_ki.c, data = data_PBO, REML=F)
+
+Placebo_AUT_Caudate <- lm(AUT_divergent ~ 1 + Caudate_ki.c , data = data_PBO, REML=F)
+Placebo_AUT_VS <- lm(AUT_divergent ~ 1 + VS_ki.c , data = data_PBO, REML=F)
+Placebo_AUT_Putamen <- lm(AUT_divergent ~ 1 + Putamen_ki.c , data = data_PBO, REML=F)
+
+Placebo_PASTA_CT_Caudate <- lm(Convergent_Pasta ~ 1 + Caudate_ki.c , data = data_PBO, REML=F)
+Placebo_PASTA_CT_VS <- lm(Convergent_Pasta ~ 1 + VS_ki.c , data = data_PBO, REML=F)
+Placebo_PASTA_CT_Putamen <- lm(Convergent_Pasta ~ 1 + Putamen_ki.c , data = data_PBO, REML=F)
+
+Placebo_PASTA_DT_Caudate <- lm(Divergent_Pasta ~ 1 + Caudate_ki.c , data = data_PBO, REML=F)
+Placebo_PASTA_DT_VS <- lm(Divergent_Pasta ~ 1 + VS_ki.c , data = data_PBO, REML=F)
+Placebo_PASTA_DT_Putamen <- lm(Divergent_Pasta ~ 1 + Putamen_ki.c , data = data_PBO, REML=F)
+
+Placebo_PASTA_DE_Caudate <- lm(DifferentEnd ~ 1 + Caudate_ki.c , data = data_PBO, REML=F)
+Placebo_PASTA_DE_VS <- lm(DifferentEnd ~ 1 + VS_ki.c , data = data_PBO, REML=F)
+Placebo_PASTA_DE_Putamen <- lm(DifferentEnd ~ 1 + Putamen_ki.c , data = data_PBO, REML=F)
+
+
+print(summary(Placebo_RAT_Caudate), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_RAT_VS), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_RAT_Putamen), corr=F) # print summary without fixed effect correlation matrix
+
+print(summary(Placebo_AUT_Caudate), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_AUT_VS), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_AUT_Putamen), corr=F) # print summary without fixed effect correlation matrix
+
+print(summary(Placebo_PASTA_CT_Caudate), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_PASTA_CT_VS), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_PASTA_CT_Putamen), corr=F) # print summary without fixed effect correlation matrix
+
+print(summary(Placebo_PASTA_DT_Caudate), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_PASTA_DT_VS), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_PASTA_DT_Putamen), corr=F) # print summary without fixed effect correlation matrix
+
+print(summary(Placebo_PASTA_DE_Caudate), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_PASTA_DE_VS), corr=F) # print summary without fixed effect correlation matrix
+print(summary(Placebo_PASTA_DE_Putamen), corr=F) # print summary without fixed effect correlation matrix
+
+
+
+```
+
+```{r}
+##################### SUL #####################################################
+##################### SUL #####################################################
+##################### SUL #####################################################
+##################### SUL #####################################################
+##################### SUL #####################################################
+```
+
+
+```{r}
+##################### RAT #####################################################
+
+# Sulpiride*Caudate interaction in predicting Convergent RAT
+SUL_Caudate_RAT <- lmer(Convergent_RAT ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Caudate_RAT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Caudate_RAT, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(SUL_Caudate_RAT)
+qqnorm(residuals(SUL_Caudate_RAT))
+
+
+# Sulpiride*Putamen interaction in predicting Convergent RAT
+SUL_Putamen_RAT <- lmer(Convergent_RAT ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Putamen_RAT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Putamen_RAT, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(SUL_Putamen_RAT)
+qqnorm(residuals(SUL_Putamen_RAT))
+
+
+# Sulpiride*VS interaction in predicting Convergent RAT
+SUL_VS_RAT <- lmer(Convergent_RAT ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_VS_RAT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_VS_RAT, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(SUL_VS_RAT)
+qqnorm(residuals(SUL_VS_RAT))
+
+
+Con1<- sjPlot::plot_model(SUL_Caudate_RAT, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+Con2 <- sjPlot::plot_model(SUL_Putamen_RAT, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+Con3 <- sjPlot::plot_model(SUL_VS_RAT, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Con1$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Con2$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Con3$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+
+behavplotCon <- ggarrange(Con1, Con2, Con3,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplotCon, top = text_grob("Effect of SUL on RAT convergent thinking", 
+               color = "black", face = "bold", size = 21))
+
+```
+
+```{r}
+
+##################### AUT #####################################################
+
+
+# Sulpiride*Caudate interaction in predicting divergent AUT
+SUL_Caudate_AUT <- lmer(AUT_divergent ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Caudate_AUT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Caudate_AUT, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(SUL_Caudate_AUT)
+qqnorm(residuals(SUL_Caudate_AUT))
+
+# Sulpiride*Caudate interaction in predicting divergent AUT
+SUL_Putamen_AUT <- lmer(AUT_divergent ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Putamen_AUT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Putamen_AUT, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(SUL_Putamen_AUT)
+qqnorm(residuals(SUL_Putamen_AUT))
+
+# Sulpiride*VS interaction in predicting divergent AUT
+SUL_VS_AUT <- lmer(AUT_divergent ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_VS_AUT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_VS_AUT, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(SUL_VS_AUT)
+qqnorm(residuals(SUL_VS_AUT))
+
+
+Div1<- sjPlot::plot_model(SUL_Caudate_AUT, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+Div2 <- sjPlot::plot_model(SUL_Putamen_AUT, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+Div3 <- sjPlot::plot_model(SUL_VS_AUT, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Div1$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Div2$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Div3$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+
+behavplotDiv <- ggarrange(Div1, Div2, Div3,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplotDiv, top = text_grob("Effect of SUL on AUT divergent thinking", 
+               color = "black", face = "bold", size = 21))
+```
+
+
+
+```{r}
+##################### PASTA #####################################################
+##################### Convergent ###############################################
+
+
+# Sulpiride*Caudate interaction in predicting convergent Pasta
+SUL_Caudate_PastCon <- lmer(Convergent_Pasta ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Caudate_PastCon), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Caudate_PastCon, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(SUL_Caudate_PastCon)
+qqnorm(residuals(SUL_Caudate_PastCon))
+
+# Sulpiride*Caudate interaction in predicting convergent Pasta
+SUL_Putamen_PastCon <- lmer(Convergent_Pasta ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Putamen_PastCon), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Putamen_PastCon, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(SUL_Putamen_PastCon)
+qqnorm(residuals(SUL_Putamen_PastCon))
+
+# Sulpiride*Caudate interaction in predicting convergent Pasta
+SUL_VS_PastCon <- lmer(Convergent_Pasta ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_VS_PastCon), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_VS_PastCon, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(SUL_VS_PastCon)
+qqnorm(residuals(SUL_VS_PastCon))
+
+
+
+Pasta1<- sjPlot::plot_model(SUL_Caudate_PastCon, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+Pasta2 <- sjPlot::plot_model(SUL_Putamen_PastCon, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+Pasta3 <- sjPlot::plot_model(SUL_VS_PastCon, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Pasta1$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Pasta2$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Pasta3$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+
+behavplotPasta1 <- ggarrange(Pasta1, Pasta2, Pasta3,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplotPasta1, top = text_grob("Effect of SUL on ANT convergent thinking", 
+               color = "black", face = "bold", size = 21))
+
+```
+
+
+```{r}
+
+##################### PASTA #####################################################
+##################### Divergent ###############################################
+
+
+# Sulpiride*Caudate interaction in predicting divergent Pasta
+SUL_Caudate_PastDiv <- lmer(Divergent_Pasta ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Caudate_PastDiv), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Caudate_PastDiv, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(SUL_Caudate_PastDiv)
+qqnorm(residuals(SUL_Caudate_PastDiv))
+
+
+# Sulpiride*Caudate interaction in predicting divergent Pasta
+SUL_Putamen_PastDiv <- lmer(Divergent_Pasta ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Putamen_PastDiv), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Putamen_PastDiv, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(SUL_Putamen_PastDiv)
+qqnorm(residuals(SUL_Putamen_PastDiv))
+
+# Sulpiride*VS interaction in predicting divergent Pasta
+SUL_VS_PastDiv <- lmer(Divergent_Pasta ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_VS_PastDiv), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_VS_PastDiv, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(SUL_VS_PastDiv)
+qqnorm(residuals(SUL_VS_PastDiv))
+
+
+
+Pasta4<- sjPlot::plot_model(SUL_Caudate_PastDiv, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+Pasta5 <- sjPlot::plot_model(SUL_Putamen_PastDiv, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+Pasta6 <- sjPlot::plot_model(SUL_VS_PastDiv, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Pasta4$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Pasta5$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Pasta6$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+
+behavplotPasta2 <- ggarrange(Pasta4, Pasta5, Pasta6,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplotPasta2, top = text_grob("Effect of SUL on ANT divergent thinking", 
+               color = "black", face = "bold", size = 21))
+
+```
+
+```{r}
+####### Different End PASTA ###################################################
+
+# Sulpiride*Caudate interaction in predicting divergent Pasta divergent response
+SUL_Caudate_PastDif <- lmer(DifferentEnd ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Caudate_PastDif), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Caudate_PastDif, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(SUL_Caudate_PastDif)
+qqnorm(residuals(SUL_Caudate_PastDif))
+
+# Sulpiride*Putamen interaction in predicting divergent Pasta divergent response
+SUL_Putamen_PastDif <- lmer(DifferentEnd ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_Putamen_PastDif), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_Putamen_PastDif, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(SUL_Putamen_PastDif)
+qqnorm(residuals(SUL_Putamen_PastDif))
+
+# Sulpiride*VS interaction in predicting divergent Pasta divergent response
+SUL_VS_PastDif <- lmer(DifferentEnd ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL_VS_PastDif), corr=F) # print summary without fixed effect correlation matrix
+plot_model(SUL_VS_PastDif, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(SUL_VS_PastDif)
+qqnorm(residuals(SUL_VS_PastDif))
+
+
+
+
+Pasta7<- sjPlot::plot_model(SUL_Caudate_PastDif, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+Pasta8 <- sjPlot::plot_model(SUL_Putamen_PastDif, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+Pasta9 <- sjPlot::plot_model(SUL_VS_PastDif, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Pasta7$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Pasta8$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+levels(Pasta9$data$term) <- c("SUL*Ki", "Session", "Ki", "SUL")
+
+behavplotPasta3 <- ggarrange(Pasta7, Pasta8, Pasta9,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplotPasta3, top = text_grob("Effect of SUL on ANT response divergence", 
+               color = "black", face = "bold", size = 21))
+
+```
+
+
+
+
+```{r}
+##################### MPH #####################################################
+##################### MPH #####################################################
+##################### MPH #####################################################
+##################### MPH #####################################################
+##################### MPH #####################################################
+```
+
+
+```{r}
+##################### RAT #####################################################
+
+# MPH*Caudate interaction in predicting Convergent RAT
+MPH_Caudate_RAT <- lmer(Convergent_RAT ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Caudate_RAT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Caudate_RAT, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(MPH_Caudate_RAT)
+qqnorm(residuals(MPH_Caudate_RAT))
+
+# MPH*Putamen interaction in predicting Convergent RAT
+MPH_Putamen_RAT <- lmer(Convergent_RAT ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Putamen_RAT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Putamen_RAT, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(MPH_Putamen_RAT)
+qqnorm(residuals(MPH_Putamen_RAT))
+
+# Sulpiride*VS interaction in predicting Convergent RAT
+MPH_VS_RAT <- lmer(Convergent_RAT ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_VS_RAT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_VS_RAT, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(MPH_VS_RAT)
+qqnorm(residuals(MPH_VS_RAT))
+```
+
+```{r}
+##################### AUT #####################################################
+
+# MPH*Caudate interaction in predicting divergent AUT
+MPH_Caudate_AUT <- lmer(AUT_divergent ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Caudate_AUT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Caudate_AUT, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(MPH_Caudate_AUT)
+qqnorm(residuals(MPH_Caudate_AUT))
+
+# MPH*Putamen interaction in predicting divergent AUT
+MPH_Putamen_AUT <- lmer(AUT_divergent ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Putamen_AUT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Putamen_AUT, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(MPH_Putamen_AUT)
+qqnorm(residuals(MPH_Putamen_AUT))
+
+# MPH*VS interaction in predicting divergent AUT
+MPH_VS_AUT <- lmer(AUT_divergent ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_VS_AUT), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_VS_AUT, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(MPH_VS_AUT)
+qqnorm(residuals(MPH_VS_AUT))
+```
+
+
+
+```{r}
+
+##################### PASTA #####################################################
+##################### Convergent ##############################################
+
+# MPH*Caudate interaction in predicting convergent Pasta
+MPH_Caudate_PastCon <- lmer(Convergent_Pasta ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Caudate_PastCon), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Caudate_PastCon, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(MPH_Caudate_PastCon)
+qqnorm(residuals(MPH_Caudate_PastCon))
+
+
+# MPH*Putamen interaction in predicting convergent Pasta
+MPH_Putamen_PastCon <- lmer(Convergent_Pasta ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Putamen_PastCon), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Putamen_PastCon, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(MPH_Putamen_PastCon)
+qqnorm(residuals(MPH_Putamen_PastCon))
+
+# MPH*VS interaction in predicting convergent Pasta
+MPH_VS_PastCon <- lmer(Convergent_Pasta ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_VS_PastCon), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_VS_PastCon, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(MPH_VS_PastCon)
+qqnorm(residuals(MPH_VS_PastCon))
+
+
+set_theme(
+  base = theme_classic(), 
+  legend.title.face = "italic", # title font face
+  legend.inside = TRUE,         # legend inside plot
+  legend.color = "grey50",      # legend label color
+  legend.pos = "bottom right",  # legend position inside plot
+  title.size = 2,
+  title.align = "center",
+  axis.title.size = 1.1,
+  axis.textsize = 1.1,
+  legend.size = 1,
+  legend.title.size = 2,
+  geom.label.size = 3
+)
+
+Convergent1 <- sjPlot::plot_model(MPH_Caudate_PastCon,
+                   show.values=TRUE, show.p=TRUE, vline.color='black', 
+                   title="Caudate Ki") 
+
+Convergent2 <- sjPlot::plot_model(MPH_Putamen_PastCon, 
+                   show.values=TRUE, show.p=TRUE,vline.color='black',
+                   title="Putamen Ki") 
+
+Convergent3 <- sjPlot::plot_model(MPH_VS_PastCon, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Convergent1$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+levels(Convergent2$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+levels(Convergent3$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+
+
+behavplot <- ggarrange(Convergent1, Convergent2, Convergent3,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplot, top = text_grob("Effect of MPH on convergent thinking", 
+               color = "black", face = "bold", size = 21))
+
+```
+
+```{r}
+
+##################### PASTA #####################################################
+##################### Divergent ##############################################
+
+# MPH*Caudate interaction in predicting divergent Pasta
+MPH_Caudate_PastDiv <- lmer(Divergent_Pasta ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Caudate_PastDiv), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Caudate_PastDiv, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(MPH_Caudate_PastDiv)
+qqnorm(residuals(MPH_Caudate_PastDiv))
+
+# MPH*Putamen interaction in predicting divergent Pasta
+MPH_Putamen_PastDiv <- lmer(Divergent_Pasta ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Putamen_PastDiv), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Putamen_PastDiv, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(MPH_Putamen_PastDiv)
+qqnorm(residuals(MPH_Putamen_PastDiv))
+
+# MPH*VS interaction in predicting divergent Pasta
+MPH_VS_PastDiv <- lmer(Divergent_Pasta ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_VS_PastDiv), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_VS_PastDiv, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(MPH_VS_PastDiv)
+qqnorm(residuals(MPH_VS_PastDiv))
+
+Divergent1<- sjPlot::plot_model(MPH_Caudate_PastDiv, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+Divergent2 <- sjPlot::plot_model(MPH_Putamen_PastDiv, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+Divergent3 <- sjPlot::plot_model(MPH_VS_PastDiv, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="VS Ki") 
+
+levels(Divergent1$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+levels(Divergent2$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+levels(Divergent3$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+
+behavplot2 <- ggarrange(Divergent1, Divergent2, Divergent3,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplot2, top = text_grob("Effect of MPH on divergent thinking", 
+               color = "black", face = "bold", size = 21))
+
+
+```
+
+```{r}
+####### Different End PASTA ###################################################
+
+# MPH*Caudate interaction in predicting divergent Pasta divergent response
+MPH_Caudate_PastDif <- lmer(DifferentEnd ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Caudate_PastDif), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Caudate_PastDif, type = "pred", terms = c("Caudate_ki.c","Session","Drug"))
+plot(MPH_Caudate_PastDif)
+qqnorm(residuals(MPH_Caudate_PastDif))
+
+# MPH*Putamen interaction in predicting divergent Pasta divergent response
+MPH_Putamen_PastDif <- lmer(DifferentEnd ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_Putamen_PastDif), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_Putamen_PastDif, type = "pred", terms = c("Putamen_ki.c","Session","Drug"))
+plot(MPH_Putamen_PastDif)
+qqnorm(residuals(MPH_Putamen_PastDif))
+
+# MPH*VS interaction in predicting divergent Pasta divergent response
+MPH_VS_PastDif <- lmer(DifferentEnd ~ 1 + Drug*VS_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(MPH_VS_PastDif), corr=F) # print summary without fixed effect correlation matrix
+plot_model(MPH_VS_PastDif, type = "pred", terms = c("VS_ki.c","Session","Drug"))
+plot(MPH_VS_PastDif)
+qqnorm(residuals(MPH_VS_PastDif))
+
+
+AllDif <- lmer(DifferentEnd ~ 1 + Drug*VS_ki.c+ Drug*Putamen_ki.c + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH, REML=F)
+print(summary(AllDif), corr=F) # print summary without fixed effect correlation matrix
+
+
+DifEnd1<- sjPlot::plot_model(MPH_Caudate_PastDif, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Caudate Ki") 
+
+DifEnd2 <- sjPlot::plot_model(MPH_Putamen_PastDif, 
+                   show.values=TRUE, show.p=TRUE, vline.color='black',
+                   title="Putamen Ki") 
+
+DifEnd3 <- sjPlot::plot_model(MPH_VS_PastDif, 
+                   show.values=TRUE, show.p=TRUE,  vline.color='black',
+                   title="VS Ki") 
+
+levels(DifEnd1$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+levels(DifEnd2$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+levels(DifEnd3$data$term) <- c("MPH*Ki", "Session", "Ki", "MPH")
+
+behavplot3 <- ggarrange(DifEnd1, DifEnd2, DifEnd3,  ncol = 3,
+  nrow = 1,   widths = 10,
+  heights = 3)
+
+annotate_figure(behavplot3, top = text_grob("Effect of MPH on response divergence", 
+               color = "black", face = "bold", size = 21))
+
+
+```
+
+```{r}
+Session1 <- dataAll[grep("1", dataAll$Session),]
+
+ggscatter(Session1, x = "Caudate_ki", y = "KDOCStotal",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "CaudateKi)", ylab = "SubjectiveCreativity")
+
+ggscatter(Session1, x = "Putamen_ki", y = "KDOCStotal",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "CaudateKi)", ylab = "SubjectiveCreativity")
+
+ggscatter(Session1, x = "VS_ki", y = "KDOCStotal",
+          add = "reg.line", conf.int = TRUE,
+          cor.coef = TRUE, cor.method = "pearson",
+          xlab = "CaudateKi)", ylab = "SubjectiveCreativity")
+
+
+```
+
+```{r}
+# Ecological validity
+
+ConCr <- lmer(Convergent_Pasta ~ 1 + KDOCStotal + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConCr), corr=F) # print summary without fixed effect correlation matrix
+
+DivArt <- lmer(Divergent_Pasta ~ 1 + KDOCStotal + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(DivArt), corr=F) # print summary without fixed effect correlation matrix
+
+DifEnd <- lmer(DifferentEnd ~ 1 + KDOCStotal + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(DifEnd), corr=F) # print summary without fixed effect correlation matrix
+
+ConCr <- lmer(Convergent_RAT ~ 1 + KDOCStotal + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConCr), corr=F) # print summary without fixed effect correlation matrix
+
+ConCr <- lmer(AUT_divergent ~ 1 + KDOCStotal + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConCr), corr=F) # print summary without fixed effect correlation matrix
+```
+
+```{r}
+
+## criterion validity
+
+ConDivPasta <- lmer(Convergent_Pasta ~ 1 + Divergent_Pasta + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConDivPasta), corr=F) # print summary without fixed effect correlation matrix
+
+ConDifPasta <- lmer(Convergent_Pasta ~ 1 + DifferentEnd + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConDifPasta), corr=F) # print summary without fixed effect correlation matrix
+
+## construct validity
+
+
+ConDifRAT <- lmer(Convergent_RAT ~ 1 + DifferentEnd + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConDifRAT), corr=F) # print summary without fixed effect correlation matrix
+
+ConPastaRAT <- lmer(Convergent_RAT ~ 1 + Convergent_Pasta + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConPastaRAT), corr=F) # print summary without fixed effect correlation matrix
+
+DivPastaAUT <- lmer(AUT_divergent ~ 1 + Divergent_Pasta + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(DivPastaAUT), corr=F) # print summary without fixed effect correlation matrix
+
+DifPastaAUT <- lmer(AUT_divergent ~ 1 + DifferentEnd + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(DifPastaAUT), corr=F) # print summary without fixed effect correlation matrix
+
+ConDivRATAUT <- lmer(Convergent_RAT ~ 1 + AUT_divergent + Session + (1 | ID), data = dataAll, REML=F) 
+print(summary(ConDivRATAUT), corr=F) # print summary without fixed effect correlation matrix
+
+
+```
+
+```{r}
+if (!require(remotes)) {
+    install.packages("remotes")
+}
+remotes::install_github('jorvlan/raincloudplots')
+
+library(raincloudplots)
+
+library(forcats)
+
+# https://github.com/jorvlan/raincloudplots
+```
+```{r}
+plot_data<-df_MPH[c("DifferentEnd","PutamenSplit","ID","Drug")]
+colnames(plot_data)[1]<-"y_axis"
+colnames(plot_data)[3]<-"id"
+colnames(plot_data)[4]<-"group"
+
+
+plot_data2 <- plot_data %>% mutate(x_axis =
+                     case_when((PutamenSplit == 0 & group == "PBO") ~ 1, 
+                               (PutamenSplit == 1 & group  == "PBO") ~ 1,
+                               (PutamenSplit == 0 & group  == "MPH") ~ 2,
+                               (PutamenSplit == 1 & group  == "MPH") ~ 2))
+temp<-plot_data$PutamenSplit
+
+plot_data$PutamenSplit<-plot_data2$x_axis
+colnames(plot_data)[2]<-"x_axis"
+
+for (i in 1:180)
+{
+plot_data[i,5] <- plot_data[i,2] + runif(1, 0, 0.09)
+}
+colnames(plot_data)[5]<-"jit"
+
+plot_data[,6] <-temp
+colnames(plot_data)[6]<-"PutamenSplit"
+
+plot_data <- plot_data %>% mutate(PutamenSplit =
+                     case_when((PutamenSplit == 0) ~ "low Ki", 
+                               (PutamenSplit == 1 ) ~ "high Ki"))
+                          
+# first column is the y-axis scores, second column is the placement of the box plots and should vary between 1,1,01,2,2.01 based on where the means should be displayed and called x_axis, third column is Ids and named id, fourth column is the group like drug group, 5th column is the jitter and should be random numbers between 1 and 2
+
+set_theme(
+  base = theme_classic((base_size = 18)), 
+  legend.title.face = "italic", # title font face
+  legend.inside = TRUE,         # legend inside plot
+  legend.color = "grey50",      # legend label color
+  legend.pos = "bottom right",  # legend position inside plot
+  title.size = 4,
+  title.align = "center",
+  axis.title.size = 1.3,
+  axis.textsize = 1.1,
+  legend.size = 1,
+  legend.title.size = 2,
+  geom.label.size = 3, 
+)
+
+
+raincloud_2x2 <- raincloud_2x2_repmes(
+  data = plot_data,
+  colors = (c('dodgerblue', 'darkorange', 'dodgerblue', 'darkorange')),
+  fills = (c('dodgerblue', 'darkorange', 'dodgerblue', 'darkorange')),
+  line_color = 'gray',
+  line_alpha = .3,
+  size = 1,
+  alpha = .6,
+  spread_x_ticks = TRUE) +  facet_wrap(~fct_rev(PutamenSplit)) +
+
+scale_x_continuous(breaks=c(1,2), labels=c("Placebo", "MPH"), limits=c(0, 3)) +
+  xlab("Drug") + 
+  ylab("Response Divergence") 
+
+raincloud_2x2 
+
+ggsave('dataRD.tiff', units="in", width=15, height=6, dpi=300, compression = 'lzw')
+
+
+```
+
+```{r}
+dataSkippedRAT <- read.csv('~/Dropbox/DCCN/Creativity/SkippedItemsRAT_Updated.csv')
+
+dataSkipped <- lmer(SkippedItems ~ 1 + Session + (1 | subject), data = dataSkippedRAT, REML=F)
+print(summary(dataSkipped), corr=F) # print summary without fixed effect correlation matrix
+
+
+```
+
+```{r}
+install.packages("PerformanceAnalytics")
+library(PerformanceAnalytics)
+
+myvars <- c("Convergent_Pasta", "Divergent_Pasta", "Con_Div", "DifferentEnd", "AUT_divergent", "Convergent_RAT","AUT_RAT_diff", "Div_Con_Pasta_Dif","IP_Dif1", "IP_Dif2", "IP_Dif3", "IP_Dif4", "Deviance_Dif1", "Deviance_Dif2", "Deviance_Dif3", "Deviance_Dif4","Redo_Dif1", "Redo_Dif2", "Redo_Dif3", "Redo_Dif4","IP_Av_Dif","Redo_Av_Dif","Deviance_Av_Dif")
+
+onlyAvs <- c("Convergent_Pasta", "Divergent_Pasta", "Con_Div", "DifferentEnd", "AUT_divergent", "Convergent_RAT","AUT_RAT_diff", "Div_Con_Pasta_Dif","IP_Av_Dif","Redo_Av_Dif","Deviance_Av_Dif")
+
+
+newdata <- data_PBO[myvars]
+Avdata <- data_PBO[onlyAvs]
+
+
+chart.Correlation(newDeviancedata, histogram = TRUE, method = "pearson")
+chart.Correlation(newRedodata, histogram = TRUE, method = "pearson")
+chart.Correlation(newIPdata, histogram = TRUE, method = "pearson")
+
+
+library(corrplot)
+
+M = cor(newdata,use="pairwise.complete.obs")
+testRes = cor.mtest(newdata, conf.level = 0.95)
+corrplot(M, method = 'number') # colorful number
+## leave blank on non-significant coefficient
+## add significant correlation coefficients
+corrplot(M, p.mat = testRes$p, method = 'circle', type = 'lower', insig='blank',
+         addCoef.col ='black', number.cex = 0.8, diag=FALSE)
+
+M = cor(Avdata,use="pairwise.complete.obs")
+testRes = cor.mtest(Avdata, conf.level = 0.95)
+corrplot(M, method = 'number') # colorful number
+## leave blank on non-significant coefficient
+## add significant correlation coefficients
+corrplot(M, p.mat = testRes$p, method = 'circle', type = 'lower', insig='blank',
+         addCoef.col ='black', number.cex = 0.8, diag=FALSE)
+
+data_MPH <- dplyr::filter(dataAll, Drug %in% c("MPH"))  
+data_MPH <- data_MPH[order(data_MPH$ID),]
+data_SUL <- dplyr::filter(dataAll, Drug %in% c("SUL"))
+data_SUL <- data_SUL[order(data_SUL$ID),]
+data_PBO <- dplyr::filter(dataAll, Drug %in% c("PBO"))
+data_PBO <- data_PBO[order(data_PBO$ID),]
+
+
+df_Correlations <- data.frame(matrix(ncol = 8, nrow = 93))
+x <- c("ID", "MPH_PBO_Redo_Av", "MPH_PBO_IP_Av","MPH_PBO_AUT_divergent","MPH_PBO_Divergent_Pasta","MPH_PBO_DifferentEnd","MPH_PBO_Convergent_RAT","MPH_PBO_Convergent_PASTA")
+colnames(df_Correlations) <- x
+
+df_Correlations$ID <- data_MPH$ID
+df_Correlations$MPH_PBO_Redo_Av <- data_MPH$Redo_Av_Dif-data_PBO$Redo_Av_Dif
+df_Correlations$MPH_PBO_IP_Av <- data_MPH$IP_Av_Dif-data_PBO$IP_Av_Dif
+df_Correlations$MPH_PBO_AUT_divergent <- data_MPH$AUT_divergent-data_PBO$AUT_divergent
+df_Correlations$MPH_PBO_Divergent_Pasta <- data_MPH$Divergent_Pasta-data_PBO$Divergent_Pasta
+df_Correlations$MPH_PBO_DifferentEnd <- data_MPH$DifferentEnd-data_PBO$DifferentEnd
+df_Correlations$MPH_PBO_Convergent_RAT <- data_MPH$Convergent_RAT-data_PBO$Convergent_RAT
+df_Correlations$MPH_PBO_Convergent_PASTA <- data_MPH$Convergent_Pasta-data_PBO$Convergent_Pasta
+
+
+
+M = cor(df_Correlations,use="pairwise.complete.obs")
+testRes = cor.mtest(df_Correlations, conf.level = 0.95)
+corrplot(M, method = 'number') # colorful number
+## leave blank on non-significant coefficient
+## add significant correlation coefficients
+corrplot(M, p.mat = testRes$p, method = 'circle', type = 'lower', insig='blank',
+         addCoef.col ='black', number.cex = 0.8, diag=FALSE)
+
+
+
+df_SUL_cor <- data.frame(matrix(ncol = 8, nrow = 93))
+x <- c("ID", "SUL_PBO_Redo_Av", "SUL_PBO_IP_Av","SUL_PBO_AUT_divergent","SUL_PBO_Divergent_Pasta","SUL_PBO_DifferentEnd","SUL_PBO_Convergent_RAT","SUL_PBO_Convergent_PASTA")
+colnames(df_SUL_cor) <- x
+
+
+df_SUL_cor$ID <- data_SUL$ID
+df_SUL_cor$SUL_PBO_Redo_Av <- data_SUL$Redo_Av_Dif-data_PBO$Redo_Av_Dif
+df_SUL_cor$SUL_PBO_IP_Av <- data_SUL$IP_Av_Dif-data_PBO$IP_Av_Dif
+df_SUL_cor$SUL_PBO_AUT_divergent <- data_SUL$AUT_divergent-data_PBO$AUT_divergent
+df_SUL_cor$SUL_PBO_Divergent_Pasta <- data_SUL$Divergent_Pasta-data_PBO$Divergent_Pasta
+df_SUL_cor$SUL_PBO_DifferentEnd <- data_SUL$DifferentEnd-data_PBO$DifferentEnd
+df_SUL_cor$SUL_PBO_Convergent_RAT <- data_SUL$Convergent_RAT-data_PBO$Convergent_RAT
+df_SUL_cor$SUL_PBO_Convergent_PASTA <- data_SUL$Convergent_Pasta-data_PBO$Convergent_Pasta
+
+M = cor(df_SUL_cor,use="pairwise.complete.obs")
+testRes = cor.mtest(df_SUL_cor, conf.level = 0.95)
+corrplot(M, method = 'number') # colorful number
+## leave blank on non-significant coefficient
+## add significant correlation coefficients
+corrplot(M, p.mat = testRes$p, method = 'circle', type = 'lower', insig='blank',
+         addCoef.col ='black', number.cex = 0.8, diag=FALSE)
+
+
+```
+
+```{r}
+# Total number of ideas in PASTA
+MPH_Caudate_Total <- lmer(Total ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Caudate_Total), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_Putamen_Total <- lmer(Total ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Putamen_Total), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_VS_Total <- lmer(Total ~ 1 + Drug*VS_ki + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_VS_Total), corr=F) # print summary without fixed effect correlation matrix
+
+## Convergent PASTA corrected for Total number of ideas
+MPH_Caudate_ConTotal <- lmer(Con_Total ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Caudate_ConTotal), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_Putamen_ConTotal <- lmer(Con_Total ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Putamen_ConTotal), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_VS_ConTotal <- lmer(Con_Total ~ 1 + Drug*VS_ki + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_VS_ConTotal), corr=F) # print summary without fixed effect correlation matrix
+
+## Divergent PASTA corrected for Total number of ideas
+MPH_Caudate_DivTotal <- lmer(Div_Total ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Caudate_DivTotal), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_Putamen_DivTotal <- lmer(Div_Total ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Putamen_DivTotal), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_VS_DivTotal <- lmer(Div_Total ~ 1 + Drug*VS_ki + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_VS_DivTotal), corr=F) # print summary without fixed effect correlation matrix
+
+## Different ending PASTA corrected for Total number of ideas
+MPH_Caudate_DifEndTotal <- lmer(DifEnd_Total ~ 1 + Drug*Caudate_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Caudate_DifEndTotal), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_Putamen_DifEndTotal <- lmer(DifEnd_Total ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_Putamen_DifEndTotal), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_VS_DifEndTotal <- lmer(DifEnd_Total ~ 1 + Drug*VS_ki + Session + (1 | ID), data = df_MPH,REML=F)
+print(summary(MPH_VS_DifEndTotal), corr=F) # print summary without fixed effect correlation matrix
+
+```
+
+```{r}
+
+df_MPH_LowQ <- dplyr::filter(df_MPH, PutamenQuartile %in% c("1"))  
+df_MPH_HighQ <- dplyr::filter(df_MPH, PutamenQuartile %in% c("2"))  
+
+MPH_Putamen_PastDif_LowQ <- lmer(DifferentEnd ~ 1 + Drug + Session + (1 | ID), data = df_MPH_LowQ, REML=F)
+print(summary(MPH_Putamen_PastDif_LowQ), corr=F) # print summary without fixed effect correlation matrix
+
+MPH_Putamen_PastDif_HiQ <- lmer(DifferentEnd ~ 1 + Drug + Session + (1 | ID), data = df_MPH_HighQ, REML=F)
+print(summary(MPH_Putamen_PastDif_HiQ), corr=F) # print summary without fixed effect correlation matrix
+
+library(BayesFactor)
+
+lm1_bic <- BIC(MPH_Putamen_PastDif_LowQ) 
+MPH_Putamen_PastDif_LowQ_NoDrug <- lmer(DifferentEnd ~ 1 + Session + (1 | ID), data = df_MPH_LowQ, REML=F)
+
+
+lm2_bic <- BIC(MPH_Putamen_PastDif_LowQ_NoDrug) 
+
+bic_bf10 <- function(null, alternative) {
+new_bf <- exp((null - alternative) / 2) # convert BICs to Bayes factor
+names(new_bf) <- NULL # remove BIC label
+return(new_bf) # return Bayes factor of alternative over null hypothesis
+}
+
+bic_bf10(lm2_bic,lm1_bic) # convert BICs to BF
+
+
+SUL1 <- lmer(DifferentEnd ~ 1 + Drug*Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL1), corr=F) # print summary without fixed effect correlation matrix
+
+SUL2 <- lmer(DifferentEnd ~ 1 + Drug + Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL2), corr=F) # print summary without fixed effect correlation matrix
+
+SUL3 <- lmer(DifferentEnd ~ 1 + Putamen_ki.c + Session + (1 | ID), data = df_SUL, REML=F)
+print(summary(SUL3), corr=F) # print summary without fixed effect correlation matrix
+
+SUL1_bic <- BIC(SUL1) 
+SUL2_bic <- BIC(SUL2) 
+SUL3_bic <- BIC(SUL3) 
+
+bic_bf10(SUL2_bic,SUL1_bic) # null comes first, the results are for the null
+bic_bf10(SUL3_bic,SUL1_bic) # convert BICs to BF
+bic_bf10(SUL3_bic,SUL2_bic) # convert BICs to BF
+
+
+```
+
